@@ -21,7 +21,13 @@ jobs:
           java-version: '17.x'
           distribution: 'adopt'
           cache: gradle
-
+      - name: Cache dependencies
+          uses: actions/cache@v1
+          with:
+            path: ~/.gradle/caches
+            key: ${{ runner.os }}-gradle-${{ hashFiles('build.gradle.kts') }}
+            restore-keys: |
+              ${{ runner.os }}-gradle-
       - name: compose up
         run: cd docker/local && docker-compose up -d && sleep 15
 
