@@ -1,0 +1,52 @@
+apiVersion: "nais.io/v1alpha1"
+kind: "Application"
+metadata:
+  name: helsearbeidsgiver-bigquery
+  namespace: helsearbeidsgiver
+  labels:
+    team: helsearbeidsgiver
+    app: helsearbeidsgiver-bigquery
+spec:
+  image: {{image}}
+  port: 8080
+  liveness:
+    path: /health/is-alive
+    initialDelay: 10
+    timeout: 2
+    periodSeconds: 30
+    failureThreshold: 10
+  readiness:
+    path: /health/is-ready
+    initialDelay: 10
+    timeout: 2
+    periodSeconds: 5
+    failureThreshold: 10
+  prometheus:
+    enabled: true
+  replicas:
+    max: 1
+    min: 1
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1024Mi
+    requests:
+      cpu: 200m
+      memory: 512Mi
+  secureLogs:
+    enabled: true
+  azure:
+    application:
+      enabled: true
+  envFrom:
+  env:
+    - name: KOIN_PROFILE
+      value: PREPROD
+    - name: GCP_PRJ_ID
+      value: helsearbeidsgiver-dev-6d06
+  gcp:
+    bigQueryDatasets:
+      - name: im_bigquery_v1_dataset_dev
+        permission: READWRITE
+  kafka:
+    pool: nav-dev
