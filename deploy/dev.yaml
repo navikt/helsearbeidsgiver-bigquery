@@ -10,17 +10,13 @@ spec:
   image: {{image}}
   port: 8080
   liveness:
-    path: /health/is-alive
+    path: isalive
     initialDelay: 10
     timeout: 2
-    periodSeconds: 30
-    failureThreshold: 10
   readiness:
-    path: /health/is-ready
+    path: isready
     initialDelay: 10
     timeout: 2
-    periodSeconds: 5
-    failureThreshold: 10
   prometheus:
     enabled: true
   replicas:
@@ -44,6 +40,10 @@ spec:
       value: PREPROD
     - name: GCP_PRJ_ID
       value: helsearbeidsgiver-dev-6d06
+    - name: KAFKA_RAPID_TOPIC
+      value: spinn-bq
+    - name: KAFKA_CONSUMER_GROUP_ID
+      value: helsearbeidsgiver-bigquery-v1
   gcp:
     bigQueryDatasets:
       - name: im_bigquery_v1_dataset_dev
