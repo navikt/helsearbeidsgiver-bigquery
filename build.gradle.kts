@@ -1,43 +1,86 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
+val mainClassPath = "no.nav.helsearbeidsgiver.bigquery.AppKt"
+
 plugins {
-    kotlin("jvm") version "1.7.10"
     application
+    kotlin("jvm")
+    id("org.jmailen.kotlinter")
 }
 
-group = "no.nav.helsearbeidsgiver"
-version = "1.0-SNAPSHOT"
+application {
+    mainClass.set(mainClassPath)
+}
+
+tasks {
+    withType<KotlinCompile> {
+        kotlinOptions.jvmTarget = "17"
+    }
+
+    withType<Test> {
+        useJUnitPlatform()
+        testLogging {
+            events("passed", "skipped", "failed")
+            showStackTraces = true
+            exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        }
+    }
+
+    named<Jar>("jar") {
+        archiveBaseName.set("app")
+        manifest {
+            attributes["Main-Class"] = mainClassPath
+            attributes["Class-Path"] = configurations.runtimeClasspath.get().joinToString(separator = " ") {
+                it.name
+            }
+        }
+        doLast {
+            configurations.runtimeClasspath.get().forEach {
+                val file = File("$buildDir/libs/${it.name}")
+                if (!file.exists()) {
+                    it.copyTo(file)
+                }
+            }
+        }
+    }
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
 
 repositories {
-    maven("https://jitpack.io")
+    val githubPassword: String by project
+
     mavenCentral()
+    google()
+    maven("https://packages.confluent.io/maven/")
+    maven("https://jitpack.io") {
+        content {
+            excludeGroup("no.nav.helsearbeidsgiver")
+        }
+    }
     maven {
         credentials {
-            username = System.getenv("GITHUB_ACTOR") ?: "x-access-token"
-            password = System.getenv("GITHUB_TOKEN")
+            username = "x-access-token"
+            password = githubPassword
         }
         setUrl("https://maven.pkg.github.com/navikt/*")
     }
 }
 
 dependencies {
+    val logbackVersion: String by project
+    val slf4jVersion: String by project
+    val rapidsAndRiversVersion: String by project
+
+    api("com.github.navikt:rapids-and-rivers:$rapidsAndRiversVersion")
+
+    implementation("org.slf4j:slf4j-api:$slf4jVersion")
+
+    runtimeOnly("ch.qos.logback:logback-classic:$logbackVersion")
+
     testImplementation(kotlin("test"))
     implementation("com.google.cloud:google-cloud-bigquery:2.13.8")
-    implementation("com.github.navikt:rapids-and-rivers:2022061809451655538329.d6deccc62862") {
-        exclude(group = "ch.qos.logback")
-    }
-    runtimeOnly("ch.qos.logback:logback-classic:1.2.11")
-    implementation("org.slf4j:slf4j-api:1.7.30")
-}
-
-tasks.test {
-    useJUnitPlatform()
-}
-
-tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "17"
-}
-
-application {
-    mainClass.set("no.nav.helsearbeidsgiver.bigquery.AppKt")
 }
