@@ -13,10 +13,14 @@ spec:
     path: isalive
     initialDelay: 10
     timeout: 2
+    periodSeconds: 30
+    failureThreshold: 10
   readiness:
     path: isready
     initialDelay: 10
     timeout: 2
+    periodSeconds: 5
+    failureThreshold: 10
   prometheus:
     enabled: true
   replicas:
